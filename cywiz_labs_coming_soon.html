@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cywiz Labs | Next-Gen Cybersecurity & AI Intelligence (Coming Soon)</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Three.js CDN for 3D Background Particle Mesh and Waves -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- FontAwesome CDN for Cyber Icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            black: '#030712',
+                            dark: '#080d1a',
+                            card: 'rgba(10, 15, 28, 0.78)',
+                            cyan: '#00f3ff',
+                            purple: '#8a2be2',
+                            blue: '#0066ff',
+                            red: '#ff0055',
+                            emerald: '#00ffaa'
+                        }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 3s infinite alternate',
+                        'float': 'float 6s ease-in-out infinite',
+                        'spin-slow': 'spin 22s linear infinite',
+                        'spin-reverse-slow': 'spinReverse 28s linear infinite'
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%': { filter: 'drop-shadow(0 0 15px rgba(0,243,255,0.3))' },
+                            '100%': { filter: 'drop-shadow(0 0 45px rgba(0,243,255,0.85))' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-14px)' }
+                        },
+                        spinReverse: {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(-360deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #030712;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        #webgl-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: auto;
+        }
+
+        .glass-card {
+            background: rgba(8, 13, 26, 0.75);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(0, 243, 255, 0.6);
+            box-shadow: 0 12px 40px -10px rgba(0, 243, 255, 0.4);
+            transform: translateY(-4px);
+        }
+
+        .glass-nav {
+            background: rgba(3, 7, 18, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.18);
+        }
+
+        .glow-text-cyan {
+            text-shadow: 0 0 25px rgba(0, 243, 255, 0.7);
+        }
+
+        /* 3D 360-Degree Continuous Rotating Container */
+        .logo-3d-viewport {
+            perspective: 1200px;
+            transform-style: preserve-3d;
+        }
+
+        .logo-3d-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate3D360 16s linear infinite;
+            transition: transform 0.1s ease-out;
+        }
+
+        .logo-3d-card:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes rotate3D360 {
+            0% {
+                transform: rotateY(0deg) rotateX(3deg);
+            }
+            50% {
+                transform: rotateY(180deg) rotateX(-3deg);
+            }
+            100% {
+                transform: rotateY(360deg) rotateX(3deg);
+            }
+        }
+
+        .cyber-grid-overlay {
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(0, 243, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 243, 255, 0.035) 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="relative">
+
+    <!-- 3D Canvas Background -->
+    <div id="webgl-container"></div>
+
+    <!-- Cyber Grid Backdrop -->
+    <div class="fixed inset-0 cyber-grid-overlay pointer-events-none z-[1]"></div>
+
+    <nav class="fixed top-0 left-0 w-full z-50 glass-nav py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <!-- Brand Logo Header -->
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyber-cyan via-cyber-blue to-cyber-purple p-[2px] transition-transform duration-300 group-hover:scale-105">
+                    <div class="w-full h-full bg-cyber-black rounded-[10px] flex items-center justify-center p-1 overflow-hidden">
+                        <!-- Canvas Thumbnail of Original Logo -->
+                        <canvas id="nav-logo-canvas" class="w-full h-full object-contain"></canvas>
+                    </div>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-orbitron font-black text-lg tracking-wider text-white">
+                        CYWIZ <span class="text-cyber-cyan">LABS</span>
+                    </span>
+                    <span class="text-[9px] font-mono tracking-widest text-cyber-cyan/70 uppercase -mt-1">
+                        Cybersecurity & AI Intelligence
+                    </span>
+                </div>
+            </a>
+
+            <!-- Toolbar Controls -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button id="btn-speed" onclick="toggleSpeed()" class="px-3 py-1.5 rounded-lg glass-card text-xs font-mono text-cyber-cyan hover:bg-cyber-cyan/10 flex items-center gap-2">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span class="hidden sm:inline">WARP:</span>
+                    <span id="speed-label" class="font-bold">1X</span>
+                </button>
+
+                <button id="btn-audio" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg glass-card text-xs font-mono text-gray-400 hover:text-cyber-cyan flex items-center gap-2">
+                    <i id="audio-icon" class="fa-solid fa-volume-xmark"></i>
+                    <span id="audio-label" class="hidden sm:inline">AUDIO OFF</span>
+                </button>
+
+                <button onclick="toggleModal(true)" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple text-cyber-black font-orbitron font-bold text-xs tracking-wider hover:shadow-[0_0_25px_rgba(0,243,255,0.6)] transition-all">
+                    VIP ACCESS
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="relative z-10 min-h-screen pt-28 pb-20 flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 text-center">
+        
+        <!-- Live Status Badge -->
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card border-cyber-cyan/30 text-xs font-mono mb-6 animate-float">
+            <span class="w-2.5 h-2.5 rounded-full bg-cyber-cyan animate-ping"></span>
+            <span class="text-cyber-cyan font-bold tracking-wider">SYSTEMS INITIALIZING // LAUNCH DATE: OCT 11, 2026</span>
+        </div>
+
+        <!-- HERO SECTION: 360-DEGREE CONTINUOUS ROTATING ORIGINAL LOGO -->
+        <div class="relative w-80 h-80 sm:w-[420px] sm:h-[420px] my-2 flex items-center justify-center logo-3d-viewport">
+            
+            <!-- Outer Pulsing Glow Aura -->
+            <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-cyber-cyan/30 via-cyber-purple/20 to-cyber-blue/30 blur-3xl animate-pulse"></div>
+
+            <!-- Outer Orbiting Hologram Rings -->
+            <div class="absolute -inset-4 sm:-inset-6 rounded-full border border-dashed border-cyber-cyan/40 animate-spin-slow pointer-events-none"></div>
+            <div class="absolute -inset-8 sm:-inset-12 rounded-full border border-dotted border-cyber-purple/35 animate-spin-reverse-slow pointer-events-none"></div>
+
+            <!-- Rotating Ring Lights with Pointer Nodes -->
+            <div class="absolute inset-2 sm:inset-4 rounded-full border border-cyber-cyan/25 flex items-center justify-between p-1 animate-spin-slow pointer-events-none">
+                <div class="w-3.5 h-3.5 rounded-full bg-cyber-cyan shadow-[0_0_15px_#00f3ff]"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-cyber-purple shadow-[0_0_12px_#8a2be2]"></div>
+            </div>
+
+            <!-- 3D Card Object for Continuous 360 Rotation -->
+            <div id="interactive-logo-card" class="logo-3d-card flex items-center justify-center p-2">
+                <!-- High-Resolution Canvas Rendering the Exact Original Metallic Eagle Emblem -->
+                <canvas id="hero-logo-canvas" class="w-full h-full object-contain filter drop-shadow-[0_0_30px_rgba(0,243,255,0.7)]"></canvas>
+            </div>
+        </div>
+
+        <!-- Main Title & Tagline -->
+        <h1 class="font-orbitron text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white mb-3 leading-none mt-4">
+            CYWIZ <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple glow-text-cyan">LABS</span>
+        </h1>
+
+        <p class="max-w-2xl mx-auto text-gray-300 text-base sm:text-lg font-normal leading-relaxed mb-8">
+            Next-generation Cyber Security, Autonomous AI Models, High-Throughput ML Solutions, and Enterprise Cloud Systems.
+        </p>
+
+        <!-- Countdown Timer Matrix (Target: Oct 11, 2026) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl w-full mb-16">
+            <div class="glass-card p-4 rounded-2xl">
+                <div id="cd-days" class="font-orbitron text-3xl sm:text-4xl font-black text-cyber-cyan mb-1">000</div>
+                <div class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">DAYS</div>
+            </div>
+            <div class="glass-card p-4 rounded-2xl">
+                <div id="cd-hours" class="font-orbitron text-3xl sm:text-4xl font-black text-cyber-purple mb-1">00</div>
+                <div class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">HOURS</div>
+            </div>
+            <div class="glass-card p-4 rounded-2xl">
+                <div id="cd-minutes" class="font-orbitron text-3xl sm:text-4xl font-black text-cyber-blue mb-1">00</div>
+                <div class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">MINUTES</div>
+            </div>
+            <div class="glass-card p-4 rounded-2xl">
+                <div id="cd-seconds" class="font-orbitron text-3xl sm:text-4xl font-black text-cyber-emerald mb-1">00</div>
+                <div class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">SECONDS</div>
+            </div>
+        </div>
+
+        <!-- Core Pillars Grid -->
+        <div class="max-w-6xl w-full text-left mb-20">
+            <div class="text-center mb-10">
+                <span class="font-orbitron text-xs text-cyber-cyan tracking-widest uppercase">// SYSTEM ARCHITECTURE</span>
+                <h2 class="font-orbitron text-2xl sm:text-3xl font-bold text-white mt-2">OUR CORE CAPABILITIES</h2>
+                <div class="w-16 h-1 bg-gradient-to-r from-cyber-cyan to-cyber-purple mx-auto mt-3 rounded-full"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                    <div class="w-12 h-12 rounded-xl bg-cyber-cyan/10 border border-cyber-cyan/30 flex items-center justify-center text-cyber-cyan text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3 class="font-orbitron font-bold text-lg text-white mb-2">Cybersecurity Solutions & Consultancy</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        Zero-trust network architectures, real-time threat detection, offensive security, and automated vulnerability assessments.
+                    </p>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                    <div class="w-12 h-12 rounded-xl bg-cyber-purple/10 border border-cyber-purple/30 flex items-center justify-center text-cyber-purple text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <h3 class="font-orbitron font-bold text-lg text-white mb-2">AI Models & Automations</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        Custom LLM fine-tuning, autonomous workflow agents, and enterprise process automation built for maximum throughput.
+                    </p>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                    <div class="w-12 h-12 rounded-xl bg-cyber-blue/10 border border-cyber-blue/30 flex items-center justify-center text-cyber-blue text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-diagram-project"></i>
+                    </div>
+                    <h3 class="font-orbitron font-bold text-lg text-white mb-2">Machine Learning Solutions</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        Predictive analytics, computer vision engines, and resilient MLOps pipelines designed for enterprise scale.
+                    </p>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                    <div class="w-12 h-12 rounded-xl bg-cyber-emerald/10 border border-cyber-emerald/30 flex items-center justify-center text-cyber-emerald text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-cloud-bolt"></i>
+                    </div>
+                    <h3 class="font-orbitron font-bold text-lg text-white mb-2">Cloud Software & Portals</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        Distributed cloud infrastructure, multi-tenant web portals, and microservice ecosystem orchestrations.
+                    </p>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="glass-card p-6 rounded-2xl relative overflow-hidden group md:col-span-2 lg:col-span-2">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-cyber-cyan/20 to-cyber-purple/20 border border-cyber-cyan/30 flex items-center justify-center text-cyber-cyan text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-code"></i>
+                    </div>
+                    <h3 class="font-orbitron font-bold text-lg text-white mb-2">Software & Web Development Solutions</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        High-performance bespoke web applications, mission-critical custom software, and specialized engineering consultancy crafted to solve complex technological challenges.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Terminal Simulator -->
+        <div class="max-w-4xl w-full">
+            <div class="glass-card rounded-2xl border-cyber-cyan/30 overflow-hidden shadow-2xl text-left">
+                <!-- Terminal Header Bar -->
+                <div class="bg-cyber-dark/90 px-4 py-3 border-b border-gray-800 flex items-center justify-between font-mono text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
+                        <span class="text-gray-400 ml-2">cywiz-kernel@launch-target-20261011</span>
+                    </div>
+                    <span class="text-cyber-cyan font-bold">LIVE TERMINAL</span>
+                </div>
+
+                <!-- Console Display -->
+                <div class="p-6 font-mono text-xs bg-cyber-black/95 space-y-2 h-64 overflow-y-auto" id="terminal-body">
+                    <p class="text-gray-400">[SYSTEM] Cywiz OS Kernel v5.2 initialized.</p>
+                    <p class="text-cyber-cyan">[INFO] Exact metallic eagle emblem loaded with 360° rotation matrix.</p>
+                    <p class="text-cyber-cyan">[INFO] Target Launch set for October 11, 2026.</p>
+                    <p class="text-cyber-cyan">[SYSTEM] Type <span class="text-white underline">help</span> for interactive commands.</p>
+                </div>
+
+                <!-- Input Form -->
+                <form onsubmit="handleTerminalInput(event)" class="bg-cyber-dark/90 px-4 py-3 border-t border-gray-800 flex items-center gap-2">
+                    <span class="text-cyber-cyan font-mono text-xs font-bold">&gt;</span>
+                    <input type="text" id="terminal-input" placeholder="Type a command ('help', 'status', 'scan', 'target', 'clear')" class="w-full bg-transparent border-none text-white font-mono text-xs focus:outline-none placeholder:text-gray-600">
+                    <button type="submit" class="px-3 py-1 rounded bg-cyber-cyan/20 text-cyber-cyan font-mono text-xs hover:bg-cyber-cyan/30">
+                        EXEC
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- VIP Early Access Waitlist Modal -->
+    <div id="vip-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-card rounded-3xl p-6 sm:p-8 max-w-md w-full border-cyber-cyan/40 relative shadow-2xl text-left">
+            <button onclick="toggleModal(false)" class="absolute top-6 right-6 text-gray-400 hover:text-white text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="mb-6">
+                <div class="inline-flex items-center gap-2 text-cyber-cyan font-mono text-xs mb-2">
+                    <i class="fa-solid fa-key"></i> EARLY VIP ACCESS
+                </div>
+                <h3 class="font-orbitron text-2xl font-bold text-white">RESERVE YOUR PASS</h3>
+                <p class="text-gray-400 text-xs mt-1">Receive early deployment access prior to October 11, 2026.</p>
+            </div>
+
+            <form id="waitlist-form" onsubmit="handleWaitlistSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block font-mono text-xs text-cyber-cyan mb-1.5">WORK EMAIL</label>
+                    <input type="email" id="modal-email" required placeholder="security@enterprise.com" class="w-full px-4 py-3 rounded-xl bg-cyber-dark border border-gray-800 text-white font-mono text-xs focus:outline-none focus:border-cyber-cyan">
+                </div>
+
+                <div>
+                    <label class="block font-mono text-xs text-cyber-cyan mb-1.5">PRIMARY SOLUTION INTEREST</label>
+                    <select id="modal-interest" class="w-full px-4 py-3 rounded-xl bg-cyber-dark border border-gray-800 text-white font-mono text-xs focus:outline-none focus:border-cyber-cyan">
+                        <option value="Cybersecurity Solutions">Cybersecurity & Penetration Testing</option>
+                        <option value="AI Models & Automations">AI Models & LLM Automations</option>
+                        <option value="Machine Learning Solutions">ML Solutions & Computer Vision</option>
+                        <option value="Cloud Software & Portals">Cloud Software & Web Portals</option>
+                        <option value="Software & Web Development">Software & Web Development Consultancy</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple text-cyber-black font-orbitron font-bold text-xs tracking-wider hover:shadow-[0_0_20px_rgba(0,243,255,0.5)] transition-all">
+                    GET PRIORITY ACCESS
+                </button>
+            </form>
+
+            <div id="waitlist-success" class="hidden text-center py-6 space-y-4">
+                <div class="w-16 h-16 rounded-full bg-cyber-emerald/20 border border-cyber-emerald flex items-center justify-center text-cyber-emerald text-2xl mx-auto">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h4 class="font-orbitron font-bold text-lg text-white">VIP PASS CONFIRMED</h4>
+                <p class="text-gray-300 text-xs">Your early invite key for October 11, 2026 launch:</p>
+                <div class="px-4 py-3 rounded-xl bg-cyber-dark border border-cyber-cyan/40 font-mono text-cyber-cyan font-bold text-sm tracking-widest" id="vip-code-display">
+                    CYWIZ-OCT11-KEY
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-gray-800/80 bg-cyber-dark/90 py-8 text-center text-xs font-mono text-gray-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p>&copy; 2026 CYWIZ LABS INC. ALL RIGHTS RESERVED. TARGET LAUNCH: OCT 11, 2026.</p>
+            <div class="flex gap-6 text-base text-gray-400">
+                <a href="#" class="hover:text-cyber-cyan"><i class="fa-brands fa-github"></i></a>
+                <a href="#" class="hover:text-cyber-cyan"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="#" class="hover:text-cyber-cyan"><i class="fa-brands fa-linkedin"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /* ----------------------------------------------------
+           1. EXACT ORIGINAL METALLIC EAGLE LOGO RENDERER
+           Renders the exact emblem with silver wings, key shield, & CYWIZ LABS text
+           ---------------------------------------------------- */
+        function renderOriginalLogo(canvas, width, height) {
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, width, height);
+
+            const cx = width / 2;
+            const cy = height / 2 - 20;
+            const scale = width / 600;
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.scale(scale, scale);
+
+            // Chrome Silver Metallic Gradients
+            const silverGrad = ctx.createLinearGradient(-250, -200, 250, 250);
+            silverGrad.addColorStop(0.0, '#ffffff');
+            silverGrad.addColorStop(0.2, '#e0e6ed');
+            silverGrad.addColorStop(0.4, '#8a9ba8');
+            silverGrad.addColorStop(0.6, '#cbd5e1');
+            silverGrad.addColorStop(0.8, '#64748b');
+            silverGrad.addColorStop(1.0, '#334155');
+
+            const redGlowGrad = ctx.createRadialGradient(0, 0, 50, 0, 0, 280);
+            redGlowGrad.addColorStop(0, 'rgba(255, 0, 85, 0.25)');
+            redGlowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            // Red aura shadow behind wings
+            ctx.fillStyle = redGlowGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, 260, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Wing Feathers Function
+            function drawWingSection(isRight) {
+                const dir = isRight ? 1 : -1;
+                ctx.save();
+                ctx.scale(dir, 1);
+
+                // Feather Paths
+                const feathers = [
+                    { path: [[20, 20], [120, -160], [220, -220], [150, -100], [80, -20]], width: 3 },
+                    { path: [[15, 35], [110, -130], [205, -180], [135, -75], [70, 0]], width: 3 },
+                    { path: [[10, 50], [95, -100], [185, -140], [120, -50], [60, 15]], width: 2.5 },
+                    { path: [[5, 65], [80, -70], [165, -100], [105, -25], [50, 30]], width: 2.5 },
+                    { path: [[0, 80], [65, -40], [140, -60], [90, 0], [40, 45]], width: 2 },
+                    { path: [[-5, 95], [50, -10], [115, -20], [75, 25], [30, 60]], width: 2 }
+                ];
+
+                feathers.forEach(f => {
+                    ctx.beginPath();
+                    ctx.moveTo(f.path[0][0], f.path[0][1]);
+                    ctx.bezierCurveTo(f.path[1][0], f.path[1][1], f.path[2][0], f.path[2][1], f.path[3][0], f.path[3][1]);
+                    ctx.lineTo(f.path[4][0], f.path[4][1]);
+                    ctx.closePath();
+                    
+                    ctx.fillStyle = silverGrad;
+                    ctx.fill();
+                    ctx.strokeStyle = '#0f172a';
+                    ctx.lineWidth = f.width;
+                    ctx.stroke();
+
+                    // Metallic Rim Light
+                    ctx.strokeStyle = 'rgba(255, 0, 85, 0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+
+                ctx.restore();
+            }
+
+            drawWingSection(false); // Left Wing
+            drawWingSection(true);  // Right Wing
+
+            // Eagle Head & Crest
+            ctx.beginPath();
+            ctx.moveTo(0, -150);
+            ctx.bezierCurveTo(-35, -135, -45, -100, -30, -75);
+            ctx.bezierCurveTo(-15, -60, 0, -65, 10, -70);
+            ctx.bezierCurveTo(25, -60, 40, -70, 30, -90);
+            ctx.bezierCurveTo(45, -105, 30, -135, 0, -150);
+            ctx.closePath();
+            ctx.fillStyle = silverGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Beak
+            ctx.beginPath();
+            ctx.moveTo(-10, -115);
+            ctx.bezierCurveTo(-30, -110, -45, -95, -25, -85);
+            ctx.lineTo(-10, -95);
+            ctx.closePath();
+            ctx.fillStyle = '#f8fafc';
+            ctx.fill();
+            ctx.strokeStyle = '#00f3ff';
+            ctx.stroke();
+
+            // Sapphire Eye
+            ctx.beginPath();
+            ctx.arc(-10, -112, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#00f3ff';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(-10, -112, 2, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+            // Central Dark Hex Shield
+            ctx.beginPath();
+            const hR = 85;
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 2;
+                const x = Math.cos(angle) * hR;
+                const y = Math.sin(angle) * hR + 25;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = silverGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+
+            // Inner Dark Shield
+            ctx.beginPath();
+            const inR = 75;
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 2;
+                const x = Math.cos(angle) * inR;
+                const y = Math.sin(angle) * inR + 25;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            const darkHexGrad = ctx.createLinearGradient(0, -50, 0, 100);
+            darkHexGrad.addColorStop(0, '#0b1329');
+            darkHexGrad.addColorStop(1, '#030712');
+            ctx.fillStyle = darkHexGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Silver Key inside Shield
+            ctx.save();
+            ctx.translate(0, 25);
+            
+            // Key Ring
+            ctx.beginPath();
+            ctx.arc(0, -22, 18, 0, Math.PI * 2);
+            ctx.fillStyle = silverGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(0, -22, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#030712';
+            ctx.fill();
+
+            // Key Shaft & Teeth
+            ctx.fillStyle = silverGrad;
+            ctx.fillRect(-4, -5, 8, 48);
+            ctx.fillRect(4, 20, 12, 6);
+            ctx.fillRect(4, 32, 9, 6);
+
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-4, -5, 8, 48);
+            ctx.restore();
+
+            // Bottom Tail Feathers
+            ctx.beginPath();
+            ctx.moveTo(0, 110);
+            ctx.lineTo(-25, 175);
+            ctx.lineTo(0, 195);
+            ctx.lineTo(25, 175);
+            ctx.closePath();
+            ctx.fillStyle = silverGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#00f3ff';
+            ctx.stroke();
+
+            // CYWIZ LABS Engraved Text
+            ctx.font = "900 42px 'Orbitron', sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillStyle = silverGrad;
+            ctx.shadowColor = "rgba(255, 0, 85, 0.8)";
+            ctx.shadowBlur = 15;
+            ctx.fillText("CYWIZ LABS", 0, 250);
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 2;
+            ctx.strokeText("CYWIZ LABS", 0, 250);
+
+            ctx.restore();
+        }
+
+        /* Render Hero & Nav Logos */
+        function initLogoCanvases() {
+            const heroCanvas = document.getElementById('hero-logo-canvas');
+            if (heroCanvas) renderOriginalLogo(heroCanvas, 600, 600);
+
+            const navCanvas = document.getElementById('nav-logo-canvas');
+            if (navCanvas) renderOriginalLogo(navCanvas, 120, 120);
+        }
+
+        /* ----------------------------------------------------
+           2. 3D WebGL Background: Dynamic Waves & Particle Grid
+           ---------------------------------------------------- */
+        let scene, camera, renderer, particles, waveMesh;
+        let mouseX = 0, mouseY = 0;
+        let speedMultiplier = 1.0;
+        let audioActive = false;
+        let audioCtx;
+
+        function init3D() {
+            const container = document.getElementById('webgl-container');
+
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x030712, 0.0013);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 3000);
+            camera.position.z = 800;
+            camera.position.y = 120;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            // 3D Live Dynamic Wave Mesh
+            const waveGeo = new THREE.PlaneGeometry(2800, 2800, 60, 60);
+            const waveMat = new THREE.MeshBasicMaterial({
+                color: 0x00f3ff,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+            waveMesh = new THREE.Mesh(waveGeo, waveMat);
+            waveMesh.rotation.x = -Math.PI / 2 + 0.2;
+            waveMesh.position.y = -240;
+            scene.add(waveMesh);
+
+            // Floating Particles Grid
+            const particleCount = 1600;
+            const particleGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+
+            const palette = [
+                new THREE.Color(0x00f3ff), // Cyan
+                new THREE.Color(0x8a2be2), // Purple
+                new THREE.Color(0x0066ff)  // Blue
+            ];
+
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 2400;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 1400;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 2400;
+
+                const c = palette[Math.floor(Math.random() * palette.length)];
+                colors[i * 3] = c.r;
+                colors[i * 3 + 1] = c.g;
+                colors[i * 3 + 2] = c.b;
+            }
+
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const particleMat = new THREE.PointsMaterial({
+                size: 3.5,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.85,
+                blending: THREE.AdditiveBlending
+            });
+
+            particles = new THREE.Points(particleGeo, particleMat);
+            scene.add(particles);
+
+            // Mouse Interactive Tilt Response
+            document.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX - window.innerWidth / 2) * 0.4;
+                mouseY = (e.clientY - window.innerHeight / 2) * 0.4;
+
+                const logoCard = document.getElementById('interactive-logo-card');
+                if (logoCard) {
+                    const tiltX = (e.clientY / window.innerHeight - 0.5) * 22;
+                    const tiltY = (e.clientX / window.innerWidth - 0.5) * -22;
+                    logoCard.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+                }
+            });
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime() * speedMultiplier;
+
+            // Animate Wave Mesh Vertices
+            const pos = waveMesh.geometry.attributes.position;
+            for (let i = 0; i < pos.count; i++) {
+                const u = pos.getX(i);
+                const v = pos.getY(i);
+                const z = Math.sin(u * 0.004 + elapsedTime * 2.2) * 24 + Math.cos(v * 0.004 + elapsedTime * 1.6) * 24;
+                pos.setZ(i, z);
+            }
+            pos.needsUpdate = true;
+
+            // Particle Rotation Matrix
+            particles.rotation.y = elapsedTime * 0.035;
+            particles.rotation.x = elapsedTime * 0.015;
+
+            // Smooth Camera Motion
+            camera.position.x += (mouseX - camera.position.x) * 0.025;
+            camera.position.y += (-mouseY + 120 - camera.position.y) * 0.025;
+            camera.lookAt(scene.position);
+
+            renderer.render(scene, camera);
+        }
+
+        /* ----------------------------------------------------
+           3. COUNTDOWN TIMER TARGETING OCTOBER 11, 2026
+           ---------------------------------------------------- */
+        // Target Launch Date: October 11, 2026 00:00:00 UTC
+        const targetLaunchDate = new Date(Date.UTC(2026, 9, 11, 0, 0, 0)).getTime();
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const diff = targetLaunchDate - now;
+
+            if (diff <= 0) {
+                document.getElementById('cd-days').innerText = '000';
+                document.getElementById('cd-hours').innerText = '00';
+                document.getElementById('cd-minutes').innerText = '00';
+                document.getElementById('cd-seconds').innerText = '00';
+                return;
+            }
+
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('cd-days').innerText = String(d).padStart(3, '0');
+            document.getElementById('cd-hours').innerText = String(h).padStart(2, '0');
+            document.getElementById('cd-minutes').innerText = String(m).padStart(2, '0');
+            document.getElementById('cd-seconds').innerText = String(s).padStart(2, '0');
+        }
+
+        setInterval(updateCountdown, 1000);
+
+        /* ----------------------------------------------------
+           4. TOOLBAR & TERMINAL INTERACTION
+           ---------------------------------------------------- */
+        function toggleSpeed() {
+            if (speedMultiplier === 1.0) {
+                speedMultiplier = 2.5;
+                document.getElementById('speed-label').innerText = '2.5X';
+            } else if (speedMultiplier === 2.5) {
+                speedMultiplier = 5.0;
+                document.getElementById('speed-label').innerText = '5X MAX';
+            } else {
+                speedMultiplier = 1.0;
+                document.getElementById('speed-label').innerText = '1X';
+            }
+            playBeepSound(650, 0.05);
+        }
+
+        function toggleAudio() {
+            audioActive = !audioActive;
+            const label = document.getElementById('audio-label');
+            const icon = document.getElementById('audio-icon');
+
+            if (audioActive) {
+                label.innerText = 'AUDIO ON';
+                icon.className = 'fa-solid fa-volume-high text-cyber-cyan';
+                playBeepSound(880, 0.1);
+            } else {
+                label.innerText = 'AUDIO OFF';
+                icon.className = 'fa-solid fa-volume-xmark';
+            }
+        }
+
+        function playBeepSound(freq = 440, duration = 0.08) {
+            if (!audioActive) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.warn('Audio muted.');
+            }
+        }
+
+        function handleTerminalInput(e) {
+            e.preventDefault();
+            const input = document.getElementById('terminal-input');
+            const body = document.getElementById('terminal-body');
+            const cmd = input.value.trim().toLowerCase();
+
+            if (!cmd) return;
+
+            playBeepSound(950, 0.05);
+
+            const cmdLine = document.createElement('p');
+            cmdLine.className = 'text-white font-bold';
+            cmdLine.innerText = `> ${input.value}`;
+            body.appendChild(cmdLine);
+
+            const resLine = document.createElement('p');
+            resLine.className = 'text-cyber-cyan';
+
+            if (cmd === 'help') {
+                resLine.innerHTML = 'Available Commands:<br>- <span class="text-white">target</span>: Displays target launch date<br>- <span class="text-white">about</span>: Company details<br>- <span class="text-white">status</span>: Core system state<br>- <span class="text-white">scan</span>: Run emblem & key diagnostic<br>- <span class="text-white">clear</span>: Wipe terminal screen';
+            } else if (cmd === 'target') {
+                resLine.innerText = '[TARGET] Launch set to OCTOBER 11, 2026 (00:00:00 UTC).';
+            } else if (cmd === 'about') {
+                resLine.innerText = 'Cywiz Labs provides Cybersecurity Consultancy, AI LLM Automations, ML Solutions, Cloud Platforms, and Software & Web Development.';
+            } else if (cmd === 'status') {
+                resLine.innerText = '[OK] Metallic Eagle Emblem Loaded. 360° Matrix Active. Wave mesh render running.';
+            } else if (cmd === 'scan') {
+                resLine.innerText = '[SCAN] Scanning Silver Shield Key... All encryption protocols operational.';
+            } else if (cmd === 'clear') {
+                body.innerHTML = '';
+                input.value = '';
+                return;
+            } else {
+                resLine.innerText = `Unknown command '${cmd}'. Type 'help' for available list.`;
+                resLine.className = 'text-red-400';
+            }
+
+            body.appendChild(resLine);
+            body.scrollTop = body.scrollHeight;
+            input.value = '';
+        }
+
+        function toggleModal(show) {
+            const modal = document.getElementById('vip-modal');
+            playBeepSound(show ? 700 : 400, 0.08);
+
+            if (show) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function handleWaitlistSubmit(e) {
+            e.preventDefault();
+            playBeepSound(1200, 0.15);
+
+            document.getElementById('waitlist-form').classList.add('hidden');
+            document.getElementById('waitlist-success').classList.remove('hidden');
+
+            const randomHex = Math.floor(Math.random() * 8999 + 1000);
+            document.getElementById('vip-code-display').innerText = `CYWIZ-OCT11-${randomHex}`;
+        }
+
+        /* Initialize Everything on Window Load */
+        window.onload = function() {
+            initLogoCanvases();
+            init3D();
+            animate();
+            updateCountdown();
+        };
+    </script>
+</body>
+</html>
